@@ -1,0 +1,71 @@
+--Create and use zomato database
+CREATE DATABASE zomato;
+USE zomato;
+
+--Create categories table
+CREATE TABLE categories (category_id INT AUTO_INCREMENT PRIMARY KEY, category_name VARCHAR(255) NOT NULL);
+-- Insert sample data into categories table
+INSERT INTO categories (category_name) VALUES ('Vegetarian'), ('Non-Vegetarian'), ('Vegan');
+
+--Create items table
+CREATE TABLE items (item_id INT AUTO_INCREMENT PRIMARY KEY, item_name VARCHAR(255) NOT NULL, price DECIMAL(10, 2) NOT NULL, category_id INT);
+-- Insert sample data into items table
+INSERT INTO items (item_name, price, category_id) VALUES ('Biriyani', 150.00, 2), ('Paneer', 100.00, 1), ('Butter Chicken', 200.00, 2);
+
+--Create order_items table
+CREATE TABLE order_items (order_item_id INT AUTO_INCREMENT PRIMARY KEY, order_id INT, item_id INT, quantity INT NOT NULL, price DECIMAL(10, 2), FOREIGN KEY (item_id) REFERENCES items(item_id));
+-- Insert sample data into order_items table
+INSERT INTO order_items (order_id, item_id, quantity, price) VALUES (1, 1, 2, 150.00), (2, 2, 1, 100.00), (3, 3, 3, 200.00);
+
+--Create orders table
+CREATE TABLE orders (order_id INT AUTO_INCREMENT PRIMARY KEY, user_id INT, item_id INT, quantity INT NOT NULL, delivery_address VARCHAR(255) NOT NULL, order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+-- Insert sample data into orders table
+INSERT INTO orders (user_id, item_id, quantity, delivery_address) VALUES (1, 1, 2, '123 Main St'), (2, 2, 1, '456 Oak Rd'), (3, 3, 3, '789 Pine Ave'), (4, 4, 4, ‘Ariyalur’);
+
+--Create payments table
+CREATE TABLE payments (payment_id INT AUTO_INCREMENT PRIMARY KEY, order_id INT, payment_method VARCHAR(50), payment_status VARCHAR(50), amount DECIMAL(10, 2), paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+-- Insert sample data into payments table
+INSERT INTO payments (order_id, payment_method, payment_status, amount) VALUES (1, 'Credit Card', 'Paid', 300.00), (2, 'Debit Card', 'Paid', 100.00), (3, 'GPay', 'Pending', 600.00);
+
+--Create users table
+CREATE TABLE users (user_id INT PRIMARY KEY, first_name VARCHAR(255), last_name VARCHAR(255), phone_number VARCHAR(15), email VARCHAR(255));
+-- Insert sample data into users table
+INSERT INTO users (user_id, first_name, last_name, phone_number, email) VALUES (1, 'Jeyajeev', 'V', '123-456-7890', 'jjvel@example.com'), (2, 'Thirumukhil', 'SP', '908-765-4321', 'thirusp@example.com'), (3, 'Vignesh', 'D', '111-222-3444', 'vickyd@example.com'), (4, 'Bob', 'Brown', '444-555-6666', 'bob.brown@example.com'), (5, 'Gowtham', 'Kumar', '777-888-9999', 'gowtham.kumar@example.com');
+
+========== ETL ===================
+
+1. Total Revenue from All Orders
+SELECT SUM(order_items.price * order_items.quantity) AS total_revenue FROM order_items;
+
+2. Revenue by Item
+SELECT items.item_name, SUM(order_items.price * order_items.quantity) AS total_revenue FROM order_items  JOIN items ON order_items.item_id = items.item_id GROUP BY items.item_name ORDER BY total_revenue DESC;
+
+3. Revenue by Payment Method
+SELECT payments.payment_method, SUM(payments.amount) AS total_revenue FROM payments JOIN orders ON payments.order_id = orders.order_id GROUP BY payments.payment_method;
+
+4. Total Revenue by Date
+SELECT DATE(payments.paid_at) AS date, SUM(payments.amount) AS daily_revenue FROM payments GROUP BY DATE(payments.paid_at) ORDER BY date;
+
+5. Total Orders and Revenue by User
+SELECT users.first_name, users.last_name, users.phone_number, users.email, COUNT(orders.order_id) AS total_orders, SUM(order_items.price * order_items.quantity) AS total_revenue FROM orders JOIN order_items ON orders.order_id = order_items.order_id JOIN users ON orders.user_id = users.user_id GROUP BY users.user_id ORDER BY total_revenue DESC;
+
+6. Items Ordered by Category
+SELECT categories.category_name, items.item_name, SUM(order_items.quantity) AS total_quantity_ordered FROM order_items JOIN items ON order_items.item_id = items.item_id JOIN categories ON items.category_id = categories.category_id GROUP BY categories.category_name, items.item_name ORDER BY total_quantity_ordered DESC;
+
+7. Orders by Payment Status
+SELECT payments.payment_status, COUNT(orders.order_id) AS total_orders FROM payments JOIN orders ON payments.order_id = orders.order_id GROUP BY payments.payment_status;
+
+8. Users with Most Orders
+SELECT users.first_name, users.last_name, COUNT(orders.order_id) AS total_orders FROM users JOIN orders ON users.user_id = orders.user_id GROUP BY users.user_id ORDER BY total_orders DESC LIMIT 5;
+
+9. Revenue by Category
+SELECT categories.category_name, SUM(order_items.price * order_items.quantity) AS total_revenue FROM order_items JOIN items ON order_items.item_id = items.item_id JOIN categories ON items.category_id = categories.category_id GROUP BY categories.category_name;
+
+10. Items Purchased in Specific Order
+SELECT order_items.order_id, items.item_name, order_items.quantity, order_items.price FROM order_items JOIN items ON order_items.item_id = items.item_id WHERE order_items.order_id = 1;
+
+11. Customer Details with Orders
+SELECT users.first_name, users.last_name, users.phone_number, users.email, orders.order_id, orders.delivery_address, order_items.item_id, order_items.quantity FROM orders JOIN order_items ON orders.order_id = order_items.order_id JOIN users ON orders.user_id = users.user_id;
+
+12. Revenue by Customer
+SELECT users.first_name, users.last_name, users.phone_number, users.email, SUM(order_items.price * order_items.quantity) AS total_revenue FROM orders JOIN order_items ON orders.order_id = order_items.order_id JOIN users ON orders.user_id = users.user_id GROUP BY users.user_id ORDER BY total_revenue DESC;
