@@ -1,5 +1,5 @@
-# sql_data_engineering_project
-This is a practical learning project based on my self-study of SQL.
+# SQL_project
+This is a practical learning project based on my self-study of SQL in MySQL. The SQL commands for this is in __sql_commands__ file
 It demonstrates how to design and query a relational database for a restaurant’s online ordering and booking system, similar to Zomato. The work includes schema creation, sample data insertion, and analytical SQL queries for business insights.
 
 Features:
